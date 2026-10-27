@@ -1,0 +1,56 @@
+
+name: Build Audiora
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Audiora for ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: Windows
+            os: windows-latest
+            args: --win nsis
+
+          - platform: macOS
+            os: macos-latest
+            args: --mac dmg
+
+          - platform: Linux
+            os: ubuntu-latest
+            args: --linux AppImage
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Audiora
+        run: npx electron-builder ${{ matrix.args }}
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: Audiora-${{ matrix.platform }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
