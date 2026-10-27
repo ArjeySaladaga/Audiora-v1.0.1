@@ -45,7 +45,7 @@ jobs:
         run: npm ci
 
       - name: Build Audiora
-        run: npx electron-builder ${{ matrix.args }}
+        run: npx electron-builder ${{ matrix.args }} --publish never
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
