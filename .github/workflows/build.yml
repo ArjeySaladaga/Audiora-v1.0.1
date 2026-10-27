@@ -1,0 +1,56 @@
+
+name: Build Electron App
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build for ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Windows
+            os: windows-latest
+            args: --win nsis
+
+          - name: macOS
+            os: macos-latest
+            args: --mac dmg
+
+          - name: Linux
+            os: ubuntu-latest
+            args: --linux AppImage deb
+
+    steps:
+      - name: Get source code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build installer
+        run: npx electron-builder ${{ matrix.args }}
+
+      - name: Upload installer files
+        uses: actions/upload-artifact@v4
+        with:
+          name: Electron-${{ matrix.name }}
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 14
